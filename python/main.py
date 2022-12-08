@@ -42,7 +42,7 @@ def get_args(argv=None):
     parser.add_argument("--feature_names", type=str, help="file with feature names (one per row, no index, no header)",
                         required=False, default=None)
     parser.add_argument("--regression", action="store_true", help="use regression (default: classification)")
-    parser.add_argument("--class_order", type=str, help="order of classes for ordinal regression", nargs="+")
+    parser.add_argument("--class_order", type=str, help="order of classes for classification", nargs="+")
     parser.add_argument("--no_log", action="store_true", help="do not generate a log file")
     return parser.parse_args(args=argv)
 
