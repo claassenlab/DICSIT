@@ -6,6 +6,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import argparse
+import os
 
 
 def read_data(results_file: str, train_file: str, test_file: str):
@@ -63,6 +64,7 @@ def main():
     filter_response_df = data.filter(regex="^(?!PC_)")
     filter_response_df[[f"response_filter_{i}" for i in range(filter_response.shape[1])]] = \
         pd.DataFrame(filter_response, index=filter_response_df.index)
+    os.makedirs(os.path.split(args.o)[0], exist_ok=True)
     filter_response_df.to_csv(args.o)
 
 
