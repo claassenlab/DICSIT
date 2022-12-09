@@ -1,3 +1,7 @@
+"""
+Copyright 2022 Jan T. Schleicher
+"""
+
 from sklearn.model_selection import ParameterGrid
 import os
 import argparse
