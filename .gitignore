@@ -2,3 +2,5 @@
 .Rhistory
 __pycache__/
 .idea/
+output/*
+.ipynb_checkpoints/
