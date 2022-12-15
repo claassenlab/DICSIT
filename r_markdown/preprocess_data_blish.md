@@ -95,6 +95,7 @@ meta_data <- merge(meta_data, umap_coords, by="row.names")
 row.names(meta_data) <- meta_data$Row.names
 meta_data <- meta_data[2:ncol(meta_data)]
 fwrite(x = meta_data, file = "../data/blish_meta_data_umap.csv")
+saveRDS(blish, file = "../data/blish_seurat.rds")
 ```
 
 ## Separating train and test datasets
