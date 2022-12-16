@@ -167,7 +167,7 @@ def main():
     # load the data
     train_data = load_data(args.train_data)
     test_data = load_data(args.test_data)
-    response_data = pd.read_csv(args.response_data, index_col=0, sep=None)
+    response_data = pd.read_csv(args.response_data, sep=None)
 
     # set feature names
     if args.feature_names is not None:
