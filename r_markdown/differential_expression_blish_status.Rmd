@@ -110,7 +110,7 @@ for (filt in ls(cell_types_by_filter)) {
                           filt, c(paste(ct, "TRUE", sep = " "), paste(ct, "FALSE", sep = " ")),
                           ct, base_size = 14, palette = "Paired")
     print(p)
-    svg(paste("../output/figures/blish_status/blish_status_", filt,
+    svg(paste("../output/figures/blish_status/blish_status", filt,
                  gsub(",*\\s|/", "_", ct), "deg.svg",  sep = "_"), width = 4, height = 4)
     print(p)
     dev.off()
