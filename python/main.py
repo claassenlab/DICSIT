@@ -258,8 +258,8 @@ def main():
     train_pred = model.predict(train_samples)
     pickle.dump(train_pred, open(os.path.join(out_dir, "model", "train_pred.p"), "wb"))
 
-    evaluate_predictions(test_pred, test_responses, regression, "test", len(class_labels))
-    evaluate_predictions(train_pred, train_responses, regression, "train", len(class_labels))
+    evaluate_predictions(test_pred, test_responses, regression, "test", None if regression else len(class_labels))
+    evaluate_predictions(train_pred, train_responses, regression, "train", None if regression else len(class_labels))
 
     if not args.no_log:
         sys.stdout = old_stdout
