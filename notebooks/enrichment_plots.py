@@ -232,3 +232,32 @@ def plot_selected_cell_frequencies_classification(selected_cells: pd.DataFrame, 
     plt.show()
     if save:
         fig.savefig(os.path.join(out_dir, f"selected_population_frequencies_filter_{filter_idx}.svg"))
+
+
+def plot_selected_cell_frequencies_regression(selected_cells: pd.DataFrame, response_col: str, filter_idx: int,
+                                              save=False, out_dir="", palette="tab10", figsize=(4, 4), hue=None):
+    """
+    Plot the selected cell frequencies
+    @param selected_cells: pandas DataFrame containing 'selected_filter_{filter}_freq' column
+    @param response_col: column in selected_cells containing the response
+    @param filter_idx: int; index of filter to plot
+    @param save: save the plot
+    @param out_dir: path to output directory for the plots
+    @param palette: matplotlib color palette
+    @param figsize: tuple; size of the figure
+    @param hue: string; column in selected_cells to use for the hue of points in the plot
+    @return:
+    """
+    fig, ax = plt.subplots(figsize=(4, 4))
+
+    sns.scatterplot(x=response_col, y=f"selected_filter_{filter_idx}_freq", data=selected_cells, hue=hue)
+    ax.set_ylim(0, None)
+    ax.set_ylabel("selected population frequency [%]")
+    ax.set_xlabel(response_col)
+    ax.legend(frameon=False)
+
+    sns.despine()
+    plt.tight_layout()
+    plt.show()
+    if save:
+        fig.savefig(os.path.join(out_dir, f"selected_population_frequencies_filter_{filter_idx}.svg"))
