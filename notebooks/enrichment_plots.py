@@ -220,6 +220,7 @@ def plot_selected_cell_frequencies_classification(selected_cells: pd.DataFrame, 
     sns.swarmplot(x=class_col, y=f"selected_filter_{filter_idx}_freq", data=selected_cells,
                   order=class_order, ax=ax, color=".25")
     ax.set_ylabel("selected population frequency [%]")
+    ax.set_xlabel(class_col.replace("_", " "))
 
     if n_classes == 2:
         y = selected_cells[f"selected_filter_{filter_idx}_freq"].max() + 5
@@ -253,7 +254,7 @@ def plot_selected_cell_frequencies_regression(selected_cells: pd.DataFrame, resp
     sns.scatterplot(x=response_col, y=f"selected_filter_{filter_idx}_freq", data=selected_cells, hue=hue)
     ax.set_ylim(0, None)
     ax.set_ylabel("selected population frequency [%]")
-    ax.set_xlabel(response_col)
+    ax.set_xlabel(response_col.replace("_", " "))
     ax.legend(frameon=False)
 
     sns.despine()
