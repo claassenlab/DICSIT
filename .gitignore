@@ -2,6 +2,9 @@
 .Rhistory
 __pycache__/
 .idea/
-output/*
+output/figures/
+output/results/
+output/run_log/
+output/tables/
 .ipynb_checkpoints/
 .DS_Store
