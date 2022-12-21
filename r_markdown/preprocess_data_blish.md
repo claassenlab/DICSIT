@@ -2,22 +2,24 @@ Preprocessing of COVID-19 data
 ================
 Jan Schleicher
 
-- <a href="#loading-covid-19-pbmc-data" id="toc-loading-covid-19-pbmc-data">Loading COVID-19 PBMC data</a>
+- <a href="#loading-covid-19-pbmc-data"
+  id="toc-loading-covid-19-pbmc-data">Loading COVID-19 PBMC data</a>
 - <a href="#quality-control" id="toc-quality-control">Quality control</a>
-- <a href="#normalize-scale-and-visualize-the-data" id="toc-normalize-scale-and-visualize-the-data">Normalize, scale, and
+- <a href="#normalize-scale-and-visualize-the-data"
+  id="toc-normalize-scale-and-visualize-the-data">Normalize, scale, and
   visualize the data</a>
-- <a href="#separating-train-and-test-datasets" id="toc-separating-train-and-test-datasets">Separating train and test
+- <a href="#separating-train-and-test-datasets"
+  id="toc-separating-train-and-test-datasets">Separating train and test
   datasets</a>
+- <a href="#separate-train-and-test-datasets-for-s100a8-regression"
+  id="toc-separate-train-and-test-datasets-for-s100a8-regression">Separate
+  train and test datasets for S100A8 regression</a>
 
 ``` r
 library(Seurat)
 library(ggplot2)
 library(data.table)
 library(tibble)
-```
-
-``` r
-setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 ```
 
 ## Loading COVID-19 PBMC data
@@ -43,7 +45,7 @@ blish <- subset(blish, subset = percent.hb < 0.085 & percent.mt < 10)
 VlnPlot(blish, features = c("percent.mt", "percent.hb"), ncol = 2, group.by = "Array.type")
 ```
 
-![](preprocess_data_blish_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](preprocess_data_blish_files/figure-gfm/QC-1.png)<!-- -->
 
 Additionally, we remove samples with less than 500 cells. This only
 affects samples from COVID-19 patients.
@@ -68,8 +70,6 @@ blish <- FindVariableFeatures(blish, selection.method = "vst", nfeatures = 3000)
 blish <- ScaleData(blish, block.size = 100)
 ```
 
-    ## Centering and scaling data matrix
-
 For visualization, we compute a PCA and generate a UMAP projection based
 on 50 principal components.
 
@@ -82,7 +82,7 @@ blish <- RunUMAP(blish, dims = 1:50)
 DimPlot(blish, reduction = "umap", group.by = "cell.type.coarse", label = T)
 ```
 
-![](preprocess_data_blish_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](preprocess_data_blish_files/figure-gfm/umap_vis-1.png)<!-- -->
 
 For downstream analyses, we extract and save the UMAP coordinates
 together with some metadata.
@@ -143,7 +143,7 @@ for (i in seq_along(test_samples)) {
   feature_loadings <- train_data[["pca"]]@feature.loadings[var_features_train,]
   all(colnames(test_scaled_data) == row.names(feature_loadings))
   test_pca_data <- test_scaled_data[,var_features_train] %*% feature_loadings
-   
+    
   # write train and test data
   cat("==== Writing data to csv files ====\n")
   train_pca_data <- Embeddings(train_data, reduction = "pca")[, 1:100]
@@ -175,6 +175,80 @@ for (i in seq_along(test_samples)) {
     ## ==== DONE with split_2 ====
     ## Processing split_3 
     ## ==== Computing PCA on training data ====
+    ## ==== Transforming test data ====
+    ## ==== Writing data to csv files ====
+    ## ==== DONE with split_3 ====
+
+## Separate train and test datasets for S100A8 regression
+
+Since we created the S100A8 response values by taking the average sample
+S100A8 expression, including this gene in the PCA calculation for S100A8
+regression would introduce a confounder. Therefore, we generate
+additional PCA training and test data for this setting, where we exclude
+S100A8 before computing the PCA.
+
+``` r
+for (i in seq_along(test_samples)) {
+  name = names(test_samples)[i]
+  cat("Processing", name, "for S100A8 regression\n")
+  test <- test_samples[[i]]
+  train <- train_samples[[i]]
+  
+  # separate training and test data
+  train_data <- subset(blish, subset = Donor %in% train)
+  test_data <- subset(blish, subset = Donor %in% test)
+  
+  # compute PCA on training data
+  cat("==== Computing PCA on training data w/o S100A8 ====\n")
+  train_data <- FindVariableFeatures(train_data, selection.method = "vst", nfeatures = 3000)
+  variable_features_train <- VariableFeatures(train_data) 
+  variable_features_new <- variable_features_train[variable_features_train != "S100A8"]
+  train_data <- ScaleData(train_data, features = variable_features_new, block.size = 100)
+  train_data <- RunPCA(train_data, features = variable_features_new, npcs = 100)
+  
+  # transform test data
+  cat("==== Transforming test data ====\n")
+  var_features_train <- row.names(train_data@assays$SCT@scale.data)
+  train_means <- apply(train_data@assays$SCT@data[var_features_train,], 1, mean)
+  train_stds <- apply(train_data@assays$SCT@data[var_features_train,], 1, sd)
+  test_scaled_data <- t((as.matrix(test_data@assays$SCT@data[var_features_train,]) - train_means) / train_stds)
+  # Seurat's ScaleData function clips values at 10 for dgcMatrices
+  test_scaled_data[test_scaled_data > 10] <- 10
+  feature_loadings <- train_data[["pca"]]@feature.loadings[var_features_train,]
+  all(colnames(test_scaled_data) == row.names(feature_loadings))
+  test_pca_data <- test_scaled_data[,var_features_train] %*% feature_loadings
+    
+  # write train and test data
+  cat("==== Writing data to csv files ====\n")
+  train_pca_data <- Embeddings(train_data, reduction = "pca")[, 1:100]
+  train_pca_data <- merge(train_data@meta.data[,c("Donor", "cell.type",
+                                                  "cell.name")],
+                          train_pca_data, by = "row.names")
+  train_pca_data <- train_pca_data %>% column_to_rownames(., var = "Row.names")
+  fwrite(train_pca_data, paste("../data/blish_S100A8_train_data_100_PCs_", name,
+                               ".csv", sep = ""), row.names = T, quote = F)
+  test_pca_data <- merge(test_data@meta.data[,c("Donor", "cell.type",
+                                                "cell.name")],
+                         test_pca_data, by = "row.names")
+  test_pca_data <- test_pca_data %>% column_to_rownames(., var = "Row.names")
+  fwrite(test_pca_data, paste("../data/blish_S100A8_test_data_100_PCs_", name,
+                              ".csv", sep = ""), row.names = T, quote = F)
+  cat("==== DONE with", name, "====\n")
+}
+```
+
+    ## Processing split_1 for S100A8 regression
+    ## ==== Computing PCA on training data w/o S100A8 ====
+    ## ==== Transforming test data ====
+    ## ==== Writing data to csv files ====
+    ## ==== DONE with split_1 ====
+    ## Processing split_2 for S100A8 regression
+    ## ==== Computing PCA on training data w/o S100A8 ====
+    ## ==== Transforming test data ====
+    ## ==== Writing data to csv files ====
+    ## ==== DONE with split_2 ====
+    ## Processing split_3 for S100A8 regression
+    ## ==== Computing PCA on training data w/o S100A8 ====
     ## ==== Transforming test data ====
     ## ==== Writing data to csv files ====
     ## ==== DONE with split_3 ====
