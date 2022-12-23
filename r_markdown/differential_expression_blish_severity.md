@@ -125,6 +125,7 @@ for (filt in ls(cell_types_by_filter)) {
     markers <- FindMarkers(blish, ident.1 = paste(ct, "TRUE", sep = " "),
                            ident.2 = paste(ct, "FALSE", sep = " "))
     markers <- markers[markers["p_val_adj"] < 0.05,]
+    markers <- cbind(gene = row.names(markers), markers)
     fwrite(markers, file = paste("../output/tables/blish_severity", filt,
                                  gsub(",*\\s|/", "_", ct), "deg.csv",
                                  sep = "_"))

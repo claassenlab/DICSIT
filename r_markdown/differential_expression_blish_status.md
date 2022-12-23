@@ -114,6 +114,7 @@ for (filt in ls(cell_types_by_filter)) {
     markers <- FindMarkers(blish, ident.1 = paste(ct, "TRUE", sep = " "),
                            ident.2 = paste(ct, "FALSE", sep = " "))
     markers <- markers[markers["p_val_adj"] < 0.05,]
+    markers <- cbind(gene = row.names(markers), markers)
     fwrite(markers, file = paste("../output/tables/blish_status", filt,
                                  gsub(",*\\s|/", "_", ct), "deg.csv",
                                  sep = "_"))
@@ -122,7 +123,7 @@ for (filt in ls(cell_types_by_filter)) {
                           filt, c(paste(ct, "TRUE", sep = " "), paste(ct, "FALSE", sep = " ")),
                           ct, base_size = 14, palette = "Paired")
     print(p)
-    svg(paste("../output/figures/blish_status/blish_status_", filt,
+    svg(paste("../output/figures/blish_status/blish_status", filt,
                  gsub(",*\\s|/", "_", ct), "deg.svg",  sep = "_"), width = 4, height = 4)
     print(p)
     dev.off()
